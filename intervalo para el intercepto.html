@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IC para el intercepto β₀ — Regresión Lineal</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f0;
+  --text: #1a1a1a; --text2: #6b6b6b;
+  --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.28);
+  --blue-bg: #E6F1FB; --blue: #185FA5; --blue-mid: #378ADD;
+  --radius: 12px; --radius-sm: 8px;
+  --mono: 'Courier New', monospace;
+  --success: #3B6D11; --warn: #854F0B;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e; --bg2: #2a2a2a;
+    --text: #f0f0f0; --text2: #9a9a9a;
+    --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.28);
+    --blue-bg: #042C53; --blue: #85B7EB;
+    --success: #97C459; --warn: #EF9F27;
+  }
+}
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 2rem 1rem; max-width: 700px; margin: 0 auto; line-height: 1.7; font-size: 14px; }
+h1 { font-size: 1.25rem; font-weight: 500; margin-bottom: .35rem; }
+.subtitle { font-size: 13px; color: var(--text2); margin-bottom: 1.75rem; }
+.formula-box { background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 1.1rem 1.4rem; margin-bottom: 1.5rem; }
+.formula-lbl { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+.formula-main { font-size: 1.35rem; font-weight: 500; }
+.formula-main sub, .formula-main sup { font-size: .65em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: .85rem; }
+.chip { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; font-size: 13px; transition: border-color .15s, background .15s; user-select: none; }
+.chip:hover { border-color: var(--border2); }
+.chip.active { border: 1.5px solid var(--blue-mid); background: var(--blue-bg); color: var(--blue); }
+.explain-box { border-left: 3px solid var(--blue-mid); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; background: var(--bg2); padding: .85rem 1rem; font-size: 13.5px; line-height: 1.65; margin-bottom: 1.5rem; min-height: 54px; transition: opacity .18s; }
+hr { border: none; border-top: 0.5px solid var(--border); margin: 1.75rem 0; }
+.sec-title { font-size: 15px; font-weight: 500; margin-bottom: .85rem; }
+.enunciado { background: var(--bg2); border-radius: var(--radius-sm); padding: .9rem 1.1rem; line-height: 1.7; margin-bottom: 1.25rem; }
+.enunciado strong { font-weight: 500; }
+table.datos { width: 100%; border-collapse: collapse; margin-bottom: 1.25rem; font-size: 13px; }
+table.datos th { text-align: center; color: var(--text2); padding: 5px 8px; border-bottom: 0.5px solid var(--border2); font-weight: 400; }
+table.datos td { text-align: center; padding: 4px 8px; border-bottom: 0.5px solid var(--border); font-family: var(--mono); }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin-bottom: 1.25rem; }
+.metric { background: var(--bg2); border-radius: var(--radius-sm); padding: .7rem .85rem; }
+.metric-lbl { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+.metric-val { font-size: 1rem; font-weight: 500; }
+.chart-wrap { width: 100%; margin: 1rem 0 1.25rem; background: var(--bg2); border-radius: var(--radius-sm); padding: .75rem; }
+.chart-wrap svg { width: 100%; height: auto; display: block; }
+.step { display: flex; gap: 12px; margin-bottom: 1.1rem; align-items: flex-start; }
+.step-n { min-width: 26px; height: 26px; border-radius: 50%; background: var(--blue-bg); color: var(--blue); font-size: 12px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 3px; }
+.step-b { line-height: 1.65; }
+.step-b strong { font-weight: 500; display: block; margin-bottom: 4px; }
+.formula-hint { display: inline-block; font-family: var(--mono); font-size: 12px; color: var(--blue-mid); background: var(--blue-bg); padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; border: 0.5px solid rgba(55,138,221,0.2); }
+code { font-family: var(--mono); background: var(--bg2); padding: 1px 5px; border-radius: 4px; font-size: 12.5px; border: 0.5px solid var(--border); }
+.res-box { border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 1rem 1.2rem; background: var(--bg); margin-top: 1rem; }
+.res-lbl { font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+.res-val { font-size: 1.1rem; font-weight: 500; }
+.res-note { font-size: 13px; color: var(--text2); margin-top: 5px; line-height: 1.55; }
+.res-note strong { font-weight: 500; color: var(--text); }
+.input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+.input-row label { min-width: 210px; color: var(--text2); }
+input[type=number], select { padding: 5px 9px; font-size: 13px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); width: 110px; font-family: inherit; outline: none; }
+input[type=number]:focus, select:focus { border-color: var(--blue-mid); box-shadow: 0 0 0 3px rgba(55,138,221,.15); }
+button { padding: 7px 18px; font-size: 13px; font-family: inherit; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--bg); color: var(--text); cursor: pointer; margin-top: .4rem; transition: background .15s; }
+button:hover { background: var(--bg2); }
+button:active { transform: scale(0.98); }
+#c-result { display: none; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<h1>Intervalo de confianza para β₀</h1>
+<p class="subtitle">Intercepto en regresión lineal simple — medición de línea base</p>
+
+<div class="formula-box">
+  <div class="formula-lbl">Fórmula general para el intercepto</div>
+  <div class="formula-main">β̂<sub>0</sub> &nbsp;±&nbsp; t<sub>(α/2, n−2)</sub> · S<sub>e</sub> · √( 1/n + x̄² / S<sub>xx</sub> )</div>
+</div>
+
+<p style="font-size:13px;color:var(--text2);margin-bottom:.65rem;">Toca cada término para entender su papel en el punto de partida:</p>
+
+<div class="chips">
+  <div class="chip" onclick="explainChip('b0',this)">β̂<sub>0</sub> — intercepto estimado</div>
+  <div class="chip" onclick="explainChip('t',this)">t<sub>(α/2, n−2)</sub> — valor crítico</div>
+  <div class="chip" onclick="explainChip('se',this)">S<sub>e</sub> — error estándar</div>
+  <div class="chip" onclick="explainChip('dist',this)">√(1/n + x̄²/S<sub>xx</sub>) — factor de distancia</div>
+</div>
+
+<div class="explain-box" id="expl">Selecciona un término para ver su significado y por qué afecta la certidumbre de nuestra línea base.</div>
+
+<hr>
+
+<div class="sec-title">Ejercicio resuelto paso a paso</div>
+
+<div class="enunciado">
+  Se realiza un diagnóstico de estrés térmico en un procesador. Se mide la carga de trabajo de la CPU en porcentaje (<strong>X</strong>) y su temperatura resultante en °C (<strong>Y</strong>). Con <strong>n = 5</strong> observaciones, queremos estimar el intervalo de confianza al <strong>95%</strong> para el intercepto (β₀), que representará la temperatura base del equipo en reposo (0% de carga).
+</div>
+
+<table class="datos">
+  <thead><tr><th>Prueba</th><th>X (Carga CPU %)</th><th>Y (Temperatura °C)</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>10</td><td>35</td></tr>
+    <tr><td>2</td><td>20</td><td>42</td></tr>
+    <tr><td>3</td><td>30</td><td>51</td></tr>
+    <tr><td>4</td><td>40</td><td>58</td></tr>
+    <tr><td>5</td><td>50</td><td>66</td></tr>
+  </tbody>
+</table>
+
+<div class="chart-wrap">
+  <svg id="scatter-svg" viewBox="0 0 580 300" xmlns="http://www.w3.org/2000/svg" aria-label="Diagrama de dispersión con proyección del intercepto">
+    </svg>
+</div>
+
+<div class="metrics">
+  <div class="metric"><div class="metric-lbl">x̄</div><div class="metric-val" id="m-xbar">—</div></div>
+  <div class="metric"><div class="metric-lbl">β̂₁ (Pendiente)</div><div class="metric-val" id="m-b1">—</div></div>
+  <div class="metric"><div class="metric-lbl">β̂₀ (Intercepto)</div><div class="metric-val" id="m-b0">—</div></div>
+  <div class="metric"><div class="metric-lbl">Sₑ</div><div class="metric-val" id="m-se">—</div></div>
+</div>
+
+<div class="step">
+  <div class="step-n">1</div>
+  <div class="step-b"><strong>Calcular estadísticos base</strong>
+    <div class="formula-hint">Medias (x̄, ȳ) y Sumas de Cuadrados (S<sub>xx</sub>, S<sub>xy</sub>)</div>
+    <code>x̄ = 30</code>, <code>ȳ = 50.4</code><br>
+    <code>S<sub>xx</sub> = 1000</code>, <code>S<sub>xy</sub> = 780</code>
+  </div>
+</div>
+<div class="step">
+  <div class="step-n">2</div>
+  <div class="step-b"><strong>Estimar los parámetros (Mínimos Cuadrados)</strong>
+    <div class="formula-hint">β̂₁ = S<sub>xy</sub> / S<sub>xx</sub> &nbsp;|&nbsp; β̂₀ = ȳ − β̂₁·x̄</div>
+    <code>β̂₁ = 780 / 1000 = 0.78</code><br>
+    <code>β̂₀ = 50.4 − (0.78)(30) = 27.0</code><br>
+    Temperatura inicial estimada: <code>27.0 °C</code>
+  </div>
+</div>
+<div class="step">
+  <div class="step-n">3</div>
+  <div class="step-b"><strong>Calcular el error estándar residual S<sub>e</sub></strong>
+    <div class="formula-hint">SSE = S<sub>yy</sub> − β̂₁·S<sub>xy</sub> &nbsp;|&nbsp; S<sub>e</sub> = √(SSE / (n−2))</div>
+    <code>S<sub>yy</sub> = 609.2</code><br>
+    <code>SSE = 609.2 − (0.78)(780) = 0.8</code><br>
+    <code>S<sub>e</sub> = √(0.8 / 3) ≈ 0.516</code>
+  </div>
+</div>
+<div class="step">
+  <div class="step-n">4</div>
+  <div class="step-b"><strong>Calcular el Error Estándar del Intercepto SE(β̂₀)</strong>
+    <div class="formula-hint">SE(β̂₀) = S<sub>e</sub> · √( 1/n + x̄² / S<sub>xx</sub> )</div>
+    <code>SE(β̂₀) = 0.516 · √(1/5 + 900 / 1000) = 0.516 · √(1.1) ≈ 0.541</code>
+  </div>
+</div>
+<div class="step">
+  <div class="step-n">5</div>
+  <div class="step-b"><strong>Valor crítico y Margen de Error (E)</strong>
+    <div class="formula-hint">gl = n - 2 &nbsp;|&nbsp; E = t<sub>(α/2, n-2)</sub> · SE(β̂₀)</div>
+    <code>t<sub>(0.025, 3)</sub> = 3.182</code><br>
+    <code>E = 3.182 · 0.541 ≈ 1.72</code>
+  </div>
+</div>
+<div class="step">
+  <div class="step-n">6</div>
+  <div class="step-b"><strong>Construir el intervalo</strong>
+    <div class="formula-hint">IC = β̂₀ ± E</div>
+    <code>IC = 27.0 ± 1.72</code><br>
+    Límite inferior: <code>25.28</code> &nbsp; Límite superior: <code>28.72</code>
+  </div>
+</div>
+
+<div class="res-box">
+  <div class="res-lbl">Conclusión del Diagnóstico</div>
+  <div class="res-val">IC₉₅%(β₀) = (25.28 °C , 28.72 °C)</div>
+  <div class="res-note">
+    Con un 95% de confianza, la temperatura base del procesador en estado de reposo absoluto (0% de carga) se encuentra entre <strong>25.28 °C y 28.72 °C</strong>. Esta es una línea base térmica saludable y certifica que el sistema de enfriamiento está bien calibrado desde el inicio.
+  </div>
+</div>
+
+<hr>
+
+<div class="sec-title">Calculadora interactiva del Intercepto</div>
+<p style="font-size:13px;color:var(--text2);margin-bottom:1rem;">Analiza cómo la distancia de la media (x̄) afecta la certidumbre del intercepto:</p>
+
+<div class="input-row"><label>β̂₀ (intercepto estimado)</label><input type="number" id="c_b0" value="27.0" step="0.1"></div>
+<div class="input-row"><label>S<sub>e</sub> (error estándar residual)</label><input type="number" id="c_se" value="0.516" step="0.001"></div>
+<div class="input-row"><label>x̄ (media de X)</label><input type="number" id="c_xbar" value="30" step="0.1"></div>
+<div class="input-row"><label>S<sub>xx</sub> (variabilidad de X)</label><input type="number" id="c_sxx" value="1000" step="1"></div>
+<div class="input-row"><label>n (tamaño de muestra)</label><input type="number" id="c_n" value="5" min="3" step="1"></div>
+<div class="input-row"><label>Nivel de confianza</label>
+  <select id="c_conf">
+    <option value="90">90%</option>
+    <option value="95" selected>95%</option>
+    <option value="99">99%</option>
+  </select>
+</div>
+<button onclick="calcICIntercept()">Calcular IC para β₀</button>
+
+<div class="res-box" id="c-result">
+  <div class="res-lbl">Resultado</div>
+  <div class="res-val" id="c-out"></div>
+  <div style="font-size:13px;color:var(--text2);margin-top:5px;" id="c-detail"></div>
+</div>
+
+<script>
+/* ── explicaciones ── */
+const expls = {
+  b0:  "β̂₀ es el estimador puntual del intercepto. Indica el valor de Y cuando X cruza exactamente por cero. Funciona como la 'línea base' o estado inicial de nuestro modelo.",
+  t:   "t₍α/2, n−2₎ es el valor crítico de Student. Penaliza nuestra incertidumbre al tener muestras pequeñas. En este caso, con n=5 (3 grados de libertad), el factor t es muy alto (3.182), exigiendo un intervalo más ancho por precaución.",
+  se:  "Sₑ es la desviación estándar de los residuos. Representa el ruido inherente del sistema. A mayor ruido general de los datos, mayor será la incertidumbre en el punto de anclaje inicial.",
+  dist: "Esta raíz es crucial: incluye x̄². Si tus mediciones en X se hicieron muy lejos del cero, este término se vuelve grande, disparando el margen de error. Estimar el origen usando datos muy lejanos equivale a apuntar a ciegas."
+};
+function explainChip(key, el) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const box = document.getElementById('expl');
+  box.style.opacity = '0';
+  setTimeout(() => { box.textContent = expls[key]; box.style.opacity = '1'; }, 130);
+}
+
+/* ── datos del ejercicio ── */
+const Xs = [10, 20, 30, 40, 50], Ys = [35, 42, 51, 58, 66];
+const n  = Xs.length;
+const xbar = Xs.reduce((a,b)=>a+b)/n;
+const ybar = Ys.reduce((a,b)=>a+b)/n;
+const Sxy  = Xs.reduce((s,x,i)=>s+(x-xbar)*(Ys[i]-ybar), 0);
+const Sxx  = Xs.reduce((s,x)=>s+(x-xbar)**2, 0);
+const b1   = Sxy/Sxx;
+const b0   = ybar - b1*xbar;
+const Syy  = Ys.reduce((s,y)=>s+(y-ybar)**2, 0);
+const SSE  = Syy - b1*Sxy;
+const Se   = Math.sqrt(SSE/(n-2));
+
+document.getElementById('m-xbar').textContent = xbar.toFixed(1);
+document.getElementById('m-b1').textContent   = b1.toFixed(2);
+document.getElementById('m-b0').textContent   = b0.toFixed(1);
+document.getElementById('m-se').textContent   = Se.toFixed(3);
+
+/* ── gráfica SVG offline ── */
+(function drawScatter() {
+  const W=580, H=300, pad={top:20,right:20,bottom:46,left:48};
+  const pw = W-pad.left-pad.right, ph = H-pad.top-pad.bottom;
+
+  const xDom=[0,60], yDom=[20,80];
+  const sx = x => pad.left + (x-xDom[0])/(xDom[1]-xDom[0])*pw;
+  const sy = y => pad.top  + (1-(y-yDom[0])/(yDom[1]-yDom[0]))*ph;
+
+  const isDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const col = {
+    grid:    isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
+    axis:    isDark ? '#9a9a9a' : '#6b6b6b',
+    point:   isDark ? '#85B7EB' : '#185FA5',
+    line:    '#378ADD',
+    extLine: isDark ? 'rgba(55,138,221,0.4)' : 'rgba(55,138,221,0.3)',
+    text:    isDark ? '#c0c0c0' : '#444',
+    bg:      'none',
+    highlight: '#d32f2f'
+  };
+
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  const svg = document.getElementById('scatter-svg');
+  svg.innerHTML = '';
+
+  /* grid lines y etiquetas Y */
+  const yTicks = [20,30,40,50,60,70,80];
+  yTicks.forEach(yv => {
+    el('line',{x1:pad.left,y1:sy(yv),x2:pad.left+pw,y2:sy(yv),stroke:col.grid,'stroke-width':'1'},svg);
+    el('text',{x:pad.left-6,y:sy(yv)+4,'text-anchor':'end','font-size':'11','fill':col.axis},svg).textContent=yv;
+  });
+
+  /* grid lines y etiquetas X */
+  const xTicks = [0,10,20,30,40,50,60];
+  xTicks.forEach(xv => {
+    el('line',{x1:sx(xv),y1:pad.top,x2:sx(xv),y2:pad.top+ph,stroke:col.grid,'stroke-width':'1'},svg);
+    el('text',{x:sx(xv),y:pad.top+ph+16,'text-anchor':'middle','font-size':'11','fill':col.axis},svg).textContent=xv;
+  });
+
+  /* ejes principales */
+  el('line',{x1:pad.left,y1:pad.top,x2:pad.left,y2:pad.top+ph,stroke:col.axis,'stroke-width':'1'},svg);
+  el('line',{x1:pad.left,y1:pad.top+ph,x2:pad.left+pw,y2:pad.top+ph,stroke:col.axis,'stroke-width':'1'},svg);
+
+  /* etiquetas de ejes */
+  el('text',{x:pad.left+pw/2,y:H-2,'text-anchor':'middle','font-size':'12','fill':col.axis},svg).textContent='Carga CPU (%) (X)';
+  const yl = el('text',{x:12,y:pad.top+ph/2,'text-anchor':'middle','font-size':'12','fill':col.axis,transform:`rotate(-90,12,${pad.top+ph/2})`},svg);
+  yl.textContent='Temp °C (Y)';
+
+  /* recta extrapolada hacia el origen (punteada) */
+  el('line',{
+    x1:sx(0),y1:sy(b0),
+    x2:sx(10),y2:sy(b0+b1*10),
+    stroke:col.extLine,'stroke-width':'2','stroke-dasharray':'4 4'
+  },svg);
+
+  /* recta ajustada (sólida sobre el rango de datos) */
+  el('line',{
+    x1:sx(10),y1:sy(b0+b1*10),
+    x2:sx(50),y2:sy(b0+b1*50),
+    stroke:col.line,'stroke-width':'2'
+  },svg);
+
+  /* recta extrapolada futura (punteada) */
+  el('line',{
+    x1:sx(50),y1:sy(b0+b1*50),
+    x2:sx(60),y2:sy(b0+b1*60),
+    stroke:col.extLine,'stroke-width':'2','stroke-dasharray':'4 4'
+  },svg);
+
+  /* punto resaltado en el intercepto (X=0) */
+  el('circle',{cx:sx(0),cy:sy(b0),r:'5',fill:col.highlight},svg);
+  el('text',{x:sx(0)+8,y:sy(b0)-8,'text-anchor':'start','font-size':'12','font-weight':'bold','fill':col.highlight},svg).textContent=`β₀ = ${b0.toFixed(1)}`;
+
+  /* puntos de datos reales */
+  Xs.forEach((xv,i) => {
+    const cx=sx(xv), cy=sy(Ys[i]);
+    el('circle',{cx,cy,r:'6',fill:col.point,stroke:isDark?'#1e1e1e':'#fff','stroke-width':'1.5'},svg);
+  });
+})();
+
+/* ── tabla t de Student ── */
+function tCritical(conf, df) {
+  const tbl = {
+    90: [3.078,1.886,1.638,1.533,1.476,1.440,1.415,1.397,1.383,1.372,
+         1.363,1.356,1.350,1.345,1.341,1.337,1.333,1.330,1.328,1.325,
+         1.316,1.311,1.303,1.296],
+    95: [6.314,2.920,2.353,2.132,2.015,1.943,1.895,1.860,1.833,1.812,
+         1.796,1.782,1.771,1.761,1.753,1.746,1.740,1.734,1.729,1.725,
+         1.708,1.699,1.684,1.671],
+    99: [31.82,6.965,4.541,3.747,3.365,3.143,2.998,2.896,2.821,2.764,
+         2.718,2.681,2.650,2.624,2.602,2.583,2.567,2.552,2.539,2.528,
+         2.485,2.457,2.423,2.390]
+  };
+  const row = tbl[conf];
+  if (!row) return 1.96;
+  const idx = Math.min(df-1, row.length-1);
+  return idx < 0 ? row[0] : row[idx];
+}
+
+/* ── calculadora del intercepto ── */
+function calcICIntercept() {
+  const b0v  = parseFloat(document.getElementById('c_b0').value);
+  const sev  = parseFloat(document.getElementById('c_se').value);
+  const xbarv= parseFloat(document.getElementById('c_xbar').value);
+  const sxxv = parseFloat(document.getElementById('c_sxx').value);
+  const nv   = parseInt(document.getElementById('c_n').value);
+  const conf = parseInt(document.getElementById('c_conf').value);
+  const res  = document.getElementById('c-result');
+  res.style.display = 'block';
+
+  if ([b0v,sev,xbarv,sxxv,nv].some(isNaN) || nv<3 || sxxv<=0 || sev<0) {
+    document.getElementById('c-out').textContent = 'Verifica los valores ingresados.';
+    document.getElementById('c-detail').innerHTML = '';
+    return;
+  }
+  
+  const df  = nv-2;
+  const t   = tCritical(conf, df);
+  
+  // Fórmula del error estándar para el intercepto
+  const SE_b0 = sev * Math.sqrt( (1/nv) + (Math.pow(xbarv, 2) / sxxv) );
+  const E   = t * SE_b0;
+  
+  const li  = (b0v - E).toFixed(4);
+  const ls  = (b0v + E).toFixed(4);
+  const en0 = parseFloat(li)<=0 && parseFloat(ls)>=0;
+  const aLbl = conf===90?'0.05':conf===95?'0.025':'0.005';
+
+  document.getElementById('c-out').textContent =
+    `IC₍${conf}%₎(β₀) = ( ${li} , ${ls} )`;
+    
+  document.getElementById('c-detail').innerHTML =
+    `t₍${aLbl}, ${df}₎ = ${t.toFixed(3)} &nbsp;|&nbsp; SE(β̂₀) = ${SE_b0.toFixed(4)} &nbsp;|&nbsp; Margen de error E = ${E.toFixed(4)}<br>` +
+    (en0
+      ? `<span style="color:var(--warn)">⚠ El intervalo contiene al 0 — es estadísticamente posible que la recta parta del origen (0,0).</span>`
+      : `<span style="color:var(--success)">✓ El intervalo excluye al 0 — el estado base es significativamente distinto de cero.</span>`);
+}
+</script>
+</body>
+</html>
